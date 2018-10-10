@@ -32,3 +32,12 @@ not implemented currently.
 ### any other functions you might need
 
 not implemented currently.
+
+### TODO
+
+* test part code
+
+* multigpu support
+
+* offer pretained model
+
