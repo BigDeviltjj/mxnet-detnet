@@ -1,0 +1,5 @@
+/model/
+/data/
+.vscode/
+/output/
+__pycache__/
