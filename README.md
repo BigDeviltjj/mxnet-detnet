@@ -3,7 +3,7 @@ This repository tries to reproduce the result in (DetNet: A Backbone network for
 ###set up environment
 1.clone this repository into the directory.
 ```
-git clone 
+git clone git https://github.com/BigDeviltjj/mxnet-detnet.git
 ```
 2.download coco dataset into data directory.
 3.run`sh init.sh`.
