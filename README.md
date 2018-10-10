@@ -1,6 +1,6 @@
 # DetNet in mxnet
 
-This repository tries to reproduce the result in (DetNet: A Backbone network for Object Detection)[https://arxiv.org/pdf/1804.06215.pdf].
+This repository tries to reproduce the result in [DetNet: A Backbone network for Object Detection](https://arxiv.org/pdf/1804.06215.pdf).
 
 ### set up environment
 
