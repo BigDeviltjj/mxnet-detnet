@@ -67,7 +67,8 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
 
     if config.TRAIN.RESUME:
         print('continue training from ',begin_epoch)
-        arg_params, aux_params = load_param(prefix, begin_epoch, convert = True)
+#        arg_params, aux_params = load_param(prefix, begin_epoch, convert = True)
+        sym, arg_params, aux_params = mx.model.load_checkpoint(prefix,begin_epoch)
     else:
         arg_params, aux_params = None, None
         #sym_instance.init_weight(config, arg_params, aux_params)
@@ -133,6 +134,8 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
             batch_end_callback = batch_end_callback, 
             optimizer = 'sgd',optimizer_params = optimizer_params,
             begin_epoch = begin_epoch,
+	    arg_params = arg_params,
+            aux_params = aux_params,
             num_epoch = end_epoch)
 def main():
     args = parse_args()

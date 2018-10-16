@@ -14,7 +14,7 @@ class detnet(Symbol):
             self.shared_param_dict[name + '_weight'] = mx.sym.Variable(name + '_weight')
             self.shared_param_dict[name + '_bias'] = mx.sym.Variable(name + '_bias')
 
-    def get_resnet_backbone(self, data, is_train = True, with_dilated=True,  eps=1e-5):
+    def get_detnet_backbone(self, data, is_train = True, with_dilated=True,  eps=1e-5):
         use_global_stats  = not is_train
         conv1 = mx.symbol.Convolution(name='conv1', data=data, num_filter=64, pad=(3, 3), kernel=(7, 7), stride=(2, 2), no_bias=True)
         bn_conv1 = mx.symbol.BatchNorm(name='bn_conv1', data=conv1, use_global_stats=use_global_stats, fix_gamma=False, eps=eps)
@@ -491,7 +491,7 @@ class detnet(Symbol):
         data = mx.sym.Variable(name = 'data')
         im_info = mx.sym.Variable(name='im_info')
 
-        res2,res3,res4,res5,res6 = self.get_resnet_backbone(data,is_train)
+        res2,res3,res4,res5,res6 = self.get_detnet_backbone(data,is_train)
         fpn_p2, fpn_p3,fpn_p4,fpn_p5,fpn_p6 = self.get_fpn_feature(res2, res3, res4, res5,res6)
         #rpn_cls_score_p2:(1,2,(A*W*H))
         #rpn_prob_p2:(1,2A,H,W)

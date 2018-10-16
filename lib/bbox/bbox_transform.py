@@ -12,19 +12,21 @@ def bbox_transform(ex_rois,gt_rois):
     ret[:,3] = np.log((gt_rois[:,3] - gt_rois[:,1] + 1)/ (ex_rois[:,3] - ex_rois[:,1] + 1))
     return ret
 def bbox_pred(anchor, bbox):
-    bbox = bbox.astype(np.float, copy = False)
+    if anchor.shape[0] == 0:
+      return np.zeros((0,bbox.shape[1]))
+    anchor = anchor.astype(np.float, copy = False)
 
-    x = bbox[:,0] * (anchor[:,2] - anchor[:,0] + 1) + (anchor[:,2] + anchor[:,0]) / 2
-    y = bbox[:,1] * (anchor[:,3] - anchor[:,1] + 1) + (anchor[:,3] + anchor[:,1]) / 2
-    w = np.exp(bbox[:,2]) * (anchor[:,2] - anchor[:,0] + 1)
-    h = np.exp(bbox[:,3]) * (anchor[:,3] - anchor[:,1] + 1)
+    x = bbox[:,0::4] * (anchor[:,2] - anchor[:,0] + 1)[:,np.newaxis] + ((anchor[:,2] + anchor[:,0]) / 2)[:,np.newaxis] 
+    y = bbox[:,1::4] * (anchor[:,3] - anchor[:,1] + 1)[:,np.newaxis] + ((anchor[:,3] + anchor[:,1]) / 2)[:,np.newaxis] 
+    w = np.exp(bbox[:,2::4]) * (anchor[:,2] - anchor[:,0] + 1)[:,np.newaxis] 
+    h = np.exp(bbox[:,3::4]) * (anchor[:,3] - anchor[:,1] + 1)[:,np.newaxis] 
 
     pred_bboxes = np.zeros_like(bbox)
 
-    pred_bboxes[:,0] = x - 0.5 * (w-1)
-    pred_bboxes[:,1] = y - 0.5 * (h-1)
-    pred_bboxes[:,2] = x + 0.5 * (w-1)
-    pred_bboxes[:,3] = y + 0.5 * (h-1)
+    pred_bboxes[:,0::4] = x - 0.5 * (w-1)
+    pred_bboxes[:,1::4] = y - 0.5 * (h-1)
+    pred_bboxes[:,2::4] = x + 0.5 * (w-1)
+    pred_bboxes[:,3::4] = y + 0.5 * (h-1)
     return pred_bboxes
 
 def clip_boxes(boxes, im_shape):

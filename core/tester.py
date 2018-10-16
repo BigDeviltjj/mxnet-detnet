@@ -37,31 +37,56 @@ def im_detect(predictor, data_batch, data_names, scales, cfg):
         pred_boxes = bbox_pred(rois,bbox_deltas)
         pred_boxes = clip_boxes(pred_boxes, im_shape[-2:])
         pred_boxes = pred_boxes / scale
+
+        print("scale ",scale)
+        print("pred after scale:", pred_boxes)
         scores_all.append(scores)
         pred_boxes_all.append(pred_boxes)
         if DEBUG:
-          print(im_shape)
+          names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
+               'bus', 'train', 'truck', 'boat', 'traffic light',
+               'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird',
+               'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear',
+               'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie',
+               'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
+               'kite', 'baseball bat', 'baseball glove', 'skateboard',
+               'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup',
+               'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
+               'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
+               'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed',
+               'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
+               'keyboard', 'cell phone', 'microwave', 'oven', 'toaster',
+               'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors',
+               'teddy bear', 'hair drier', 'toothbrush']
+          print("im shape: ",im_shape)
           print(pred_boxes.shape)
           print(scores.shape)
           max_scores = scores.argmax(axis = 1)
+          max_scores_val = scores[np.arange(pred_boxes.shape[0]),max_scores]
           keep = np.where(max_scores>0)[0]
           max_scores = max_scores[keep]
           print(pred_boxes)
-          bboxes = pred_boxes.copy()[keep]
-          img = data_dict['data'].asnumpy().transpose((0,2,3,1))[0,:,:,::-1]
+          bboxes = pred_boxes.copy()[keep]*scale
+          max_scores_val = max_scores_val[keep]
+          img = data_dict['data'].asnumpy().transpose((0,2,3,1))[0]
           img += 123
           img = np.clip(img,0,255)
           img = img.astype(np.uint8)
           print(type(img))
           image = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
           print(img.shape)
+          print(max_scores_val)
+          maxid = max_scores_val.argsort()[-5:]
           for i, boxxes in enumerate(bboxes):
-            print(boxxes)
-            print(max_scores[i])
+            if not i in maxid: continue
+            #print("ith box:")
+            #print(boxxes)
+            #print(max_scores[i])
             box = boxxes[max_scores[i]*4:(max_scores[i]+1)*4]
             box = box.astype(np.int64)
             print(box)
             cv2.rectangle(image,tuple(box[:2]),tuple(box[2:]),(255,0,0),1)
+            cv2.putText(image,names[max_scores[i]]+" "+str(max_scores_val[i]),tuple(box[:2]),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),1)
           cv2.imwrite("det_img.png",image)
           assert 0, "check the detect image"
           

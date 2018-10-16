@@ -4,6 +4,16 @@ from rpn.generate_anchor import generate_anchors
 from bbox.bbox_transform import bbox_overlaps, bbox_transform
 import numpy.random as npr
 
+def get_rpn_testbatch(roidb, cfg):
+    imgs, roidb = get_image(roidb, cfg)
+    im_array = imgs
+    im_info = [np.array([roidb[i]['im_info']],dtype = np.float32) for i in range(len(roidb))]
+    data = [{'data': im_array[i],
+             'im_info': im_info[i]} for i in range(len(roidb))]
+        
+    label = {}
+    return data, label, im_info
+
 def get_rpn_batch(roidb,cfg):
     assert len(roidb) == 1, 'Single batch only'
 
