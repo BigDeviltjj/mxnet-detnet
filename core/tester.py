@@ -87,8 +87,10 @@ def im_detect(predictor, data_batch, data_names, scales, cfg):
             print(box)
             cv2.rectangle(image,tuple(box[:2]),tuple(box[2:]),(255,0,0),1)
             cv2.putText(image,names[max_scores[i]]+" "+str(max_scores_val[i]),tuple(box[:2]),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),1)
-          cv2.imwrite("det_img.png",image)
-          assert 0, "check the detect image"
+          cv2.imwrite("./images/det_img_{:3f}.png".format(np.random.randn()),image)
+          assert 1, "check the detect image"
+          import time
+          time.sleep(5)
           
     return scores_all, pred_boxes_all, data_dict_all
 def detect_at_single_scale(predictor, data_names, imdb, test_data, cfg, thresh, vis, all_boxes_single_scale, logger):
