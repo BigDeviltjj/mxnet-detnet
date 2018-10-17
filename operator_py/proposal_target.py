@@ -30,6 +30,9 @@ class ProposalTargetOperator(mx.operator.CustomOp):
     def forward(self, is_train, req, in_data, out_data, aux):
         all_rois = in_data[0].asnumpy()
         gt_boxes = in_data[1].asnumpy()
+        
+        gt_keep = np.where(gt_boxes[:,-1]>0)[0]
+        gt_boxes = gt_boxes[gt_keep]
 
         rois_per_image = int(self._batch_rois / self._batch_images)
         fg_rois_per_image =np.round(self._fg_fraction * rois_per_image).astype(int)

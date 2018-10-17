@@ -2,7 +2,7 @@
 MXNET_VERSION: "mxnet"
 output_path: "./output/detnet/coco"
 symbol: detnet
-gpus: '0'
+gpus: '2,3'
 CLASS_AGNOSTIC: false
 SCALES:
 - 800
@@ -54,7 +54,7 @@ TRAIN:
   warmup: true
   lr_step: '5,7'
   wd: 0.0001
-  begin_epoch: 1
+  begin_epoch: 2
   end_epoch: 8
   model_prefix: 'detnet_coco'
   # whether resume training

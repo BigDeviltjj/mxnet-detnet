@@ -165,19 +165,58 @@ class PyramidAnchorIterator(mx.io.DataIter):
             work_load_list = [1] * len(ctx)
         slices = _split_input_slice(self.batch_size, work_load_list)
 
-        rst = []
+        max_data = {}
+        max_label = {}
+        data_lst = []
+        rpn_label_lst = []
         for idx, islice in enumerate(slices):
             iroidb = [roidb[i] for i in range(islice.start, islice.stop)]
-            rst.append(par_assign_anchor_wrapper(self.cfg, iroidb, self.feat_sym, self.feat_strides,
-                                                 self.anchor_scales, self.anchor_ratios, self.allowed_border))
-        all_data = [_['data'] for _ in rst]
-        all_label = [_['label'] for _ in rst]
+
+            data, rpn_label = get_rpn_batch(iroidb, self.cfg)
+            data['gt_boxes'] = rpn_label['gt_boxes'][np.newaxis,:,:]
+            data_shape = {k:v.shape for k,v in data.items()}
+            if max_data == {} :
+              max_data = data_shape
+            else: 
+              #max_data = {k:np.where(max_data[k]>v,max_data[k],v) for k,v in data_shape.items() }
+              for k,v in data_shape.items():
+                max_data[k] = np.where(np.array(max_data[k])>np.array(data_shape[k]),np.array(max_data[k]),np.array(data_shape[k]))
+            data_lst.append(data)
+            rpn_label_lst.append(rpn_label)
+        for k,v in max_data.items():
+          max_data[k][0] = self.batch_size
+        self.data = [mx.nd.zeros(tuple(max_data['data'])),mx.nd.zeros(tuple(max_data['im_info'])),mx.nd.full(tuple(max_data['gt_boxes']),-1)]
+
+        del max_data['im_info']
+        del max_data['gt_boxes']
+
+        max_data = {k:tuple(v) for k,v in max_data.items()}
+        all_label = {}
+        for idx, islice in enumerate(slices):
+          feat_shape = [y[1] for y in [x.infer_shape(**max_data) for x in self.feat_sym]]
+          d = data_lst[idx]
+          
+          self.data[0][idx,:d['data'].shape[1],:d['data'].shape[2],:d['data'].shape[3]] = d['data'][0]
+          self.data[1][idx,:d['im_info'].shape[1]] = d['im_info'][0]
+          self.data[2][idx,:d['gt_boxes'].shape[1],:d['gt_boxes'].shape[2]] = d['gt_boxes'][0]
+           
+          label = assign_pyramid_anchor(feat_shape, rpn_label_lst[idx]['gt_boxes'],data_lst[idx]['im_info'],self.cfg,
+                                self.feat_strides, self.anchor_scales, self.anchor_ratios, self.allowed_border)
+          if all_label == {}:
+            all_label = label
+          else:
+            for k,v in label.items():
+              all_label[k] = np.vstack([all_label[k],v])
+        self.label = [mx.nd.array(v) for k,v in all_label.items()]
+
+       #     rst.append(par_assign_anchor_wrapper(self.cfg, iroidb, self.feat_sym, self.feat_strides,
+       #                                          self.anchor_scales, self.anchor_ratios, self.allowed_border))
+        #all_data = [_['data'] for _ in rst]
+        #all_label = [_['label'] for _ in rst]
         #self.data = [[mx.nd.array(data[key]) for key in self.data_name] for data in all_data]
         #self.label = [[mx.nd.array(label[key]) for key in self.label_name] for label in all_label]
-        self._combine_data(all_data)
-        self._combine_label(all_label)
-        [print(d.shape) for d in self.data]
-        [print(l.shape) for l in self.label]
+        #self._combine_data(all_data)
+        #self._combine_label(all_label)
 
 
         

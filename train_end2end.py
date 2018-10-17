@@ -15,7 +15,7 @@ from utils.load_model import load_param
 from symbols import detnet
 from core.loader import PyramidAnchorIterator
 from core import metric
-DEBUG = True
+DEBUG = False
 def parse_args():
     parser = argparse.ArgumentParser(description='train detnet network')
     parser.add_argument('--cfg',help='configure file name',type = str, default = './cfgs/detnet.yaml')
@@ -58,7 +58,12 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
 
     if DEBUG:
       train_data.reset()
-      it = train_data.next()
+      while True:
+        it = train_data.next()
+        [print(i.shape) for i in it.data]
+        [print(i.shape) for i in it.label]
+        print(it.provide_data)
+        print(it.provide_label)
       train_data.reset()
     max_data_shape = [('data',(config.TRAIN.BATCH_IMAGES,3,max([v[0] for v in config.SCALES]),max([int(v[1]//16*16) for v in config.SCALES])))]
     max_data_shape,max_label_shape = train_data.infer_shape(max_data_shape)
@@ -72,7 +77,7 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
     if config.TRAIN.RESUME:
         print('continue training from ',begin_epoch)
 #        arg_params, aux_params = load_param(prefix, begin_epoch, convert = True)
-        sym, arg_params, aux_params = mx.model.load_checkpoint(prefix,begin_epoch)
+        _, arg_params, aux_params = mx.model.load_checkpoint(prefix,begin_epoch)
     else:
         arg_params, aux_params = None, None
         #sym_instance.init_weight(config, arg_params, aux_params)
@@ -115,7 +120,7 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
         
     if not isinstance(train_data,mx.io.PrefetchingIter):
         train_data = mx.io.PrefetchingIter(train_data)
-    if DEBUG:
+    if DEBUG and 0:
         train_data.reset()
         for it in train_data:
           print(it.provide_data)
