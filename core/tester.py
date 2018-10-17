@@ -33,7 +33,8 @@ def im_detect(predictor, data_batch, data_names, scales, cfg):
 
         im_shape = data_dict['data'].shape
         scores = output['cls_prob_reshape_output'].asnumpy()[0]
-        bbox_deltas = output['bbox_pred_reshape_output'].asnumpy()[0]
+        stds = np.tile(np.array(cfg.TRAIN.BBOX_STDS),cfg.dataset.NUM_CLASSES)
+        bbox_deltas = output['bbox_pred_reshape_output'].asnumpy()[0] *stds
         pred_boxes = bbox_pred(rois,bbox_deltas)
         pred_boxes = clip_boxes(pred_boxes, im_shape[-2:])
         pred_boxes = pred_boxes / scale
