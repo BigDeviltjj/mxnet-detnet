@@ -139,5 +139,5 @@ TEST:
   PROPOSAL_MIN_SIZE: 0
   # RCNN nms
   NMS: 0.3
-  test_epoch: 1
+  test_epoch: 2
   max_per_image: 100

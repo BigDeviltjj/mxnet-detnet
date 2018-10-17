@@ -7,7 +7,7 @@ import numpy as np
 from utils import image
 from bbox.bbox_transform import bbox_pred, clip_boxes
 from nms.nms import py_nms
-DEBUG = True
+DEBUG = False
 if DEBUG:
   import cv2
 
@@ -33,7 +33,10 @@ def im_detect(predictor, data_batch, data_names, scales, cfg):
 
         im_shape = data_dict['data'].shape
         scores = output['cls_prob_reshape_output'].asnumpy()[0]
-        bbox_deltas = output['bbox_pred_reshape_output'].asnumpy()[0]
+        print(cfg.TRAIN.BBOX_STDS)
+        stds = np.tile(np.array(cfg.TRAIN.BBOX_STDS),cfg.dataset.NUM_CLASSES)
+        bbox_deltas = output['bbox_pred_reshape_output'].asnumpy()[0] *stds
+        print(bbox_deltas.shape)
         pred_boxes = bbox_pred(rois,bbox_deltas)
         pred_boxes = clip_boxes(pred_boxes, im_shape[-2:])
         pred_boxes = pred_boxes / scale
@@ -89,8 +92,6 @@ def im_detect(predictor, data_batch, data_names, scales, cfg):
             cv2.putText(image,names[max_scores[i]]+" "+str(max_scores_val[i]),tuple(box[:2]),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),1)
           cv2.imwrite("./images/det_img_{:3f}.png".format(np.random.randn()),image)
           assert 1, "check the detect image"
-          import time
-          time.sleep(5)
           
     return scores_all, pred_boxes_all, data_dict_all
 def detect_at_single_scale(predictor, data_names, imdb, test_data, cfg, thresh, vis, all_boxes_single_scale, logger):

@@ -15,7 +15,7 @@ from utils.load_model import load_param
 from symbols import detnet
 from core.loader import PyramidAnchorIterator
 from core import metric
-DEBUG = False
+DEBUG = True
 def parse_args():
     parser = argparse.ArgumentParser(description='train detnet network')
     parser.add_argument('--cfg',help='configure file name',type = str, default = './cfgs/detnet.yaml')
@@ -56,6 +56,10 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
                                    anchor_ratios = config.network.ANCHOR_RATIOS, aspect_grouping = config.TRAIN.ASPECT_GROUPING,
                                    allowed_border = np.inf)
 
+    if DEBUG:
+      train_data.reset()
+      it = train_data.next()
+      train_data.reset()
     max_data_shape = [('data',(config.TRAIN.BATCH_IMAGES,3,max([v[0] for v in config.SCALES]),max([int(v[1]//16*16) for v in config.SCALES])))]
     max_data_shape,max_label_shape = train_data.infer_shape(max_data_shape)
     max_data_shape.append(('gt_boxes',(config.TRAIN.BATCH_IMAGES,100,5)))
@@ -113,7 +117,9 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
         train_data = mx.io.PrefetchingIter(train_data)
     if DEBUG:
         train_data.reset()
-        it = train_data.next()
+        for it in train_data:
+          print(it.provide_data)
+          print(it.provide_label)
         mod.bind(data_shapes=train_data.provide_data, label_shapes=train_data.provide_label,
                   for_training=True, force_rebind=False)
         mod.init_params(arg_params=arg_params, aux_params=aux_params,
