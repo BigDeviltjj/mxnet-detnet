@@ -103,18 +103,30 @@ def demo(cfg,
         cls_dets = np.hstack((cls_boxes, cls_score)).copy()
         all_boxes[idx] = cls_dets
         
+      import matplotlib.pyplot as plt
+      plt.switch_backend('agg') 
+      im_show = plt.imread(os.path.join(image_path,img_path))
+      plt.imshow(im_show)
       for idx in range(1, num_classes):
           keep = py_nms(all_boxes[idx],cfg.TEST.NMS)
           all_boxes[idx] = all_boxes[idx][keep,:]
           for rect in all_boxes[idx]:
             tl = tuple(rect[:2].astype(np.int64))
             br = tuple(rect[2:4].astype(np.int64))
-            color = tuple(map(int,np.random.randint(0,255,size=(3))))
-            cv2.rectangle(im,tl,br,color,1)
-            cv2.putText(im,name_dict[idx] + " " + str(int(rect[-1]*100)),tl,cv2.FONT_HERSHEY_SIMPLEX,2,color,1)
-      print("detecting image {}".format(img_path))
-      cv2.imshow("det_img",im)
-      cv2.waitKey()
+            color = np.random.rand(3)
+            #cv2.rectangle(im,tl,br,color,1)
+            #cv2.putText(im,name_dict[idx] + " " + str(int(rect[-1]*100)),tl,cv2.FONT_HERSHEY_SIMPLEX,2,color,1)
+            rectangle = plt.Rectangle(tl,br[0] - tl[0],br[1] - tl[1], fill = False,
+                                 edgecolor = color,
+                                 linewidth = 3.5)
+            plt.gca().add_patch(rectangle)
+            plt.gca().text(tl[0],tl[1]-2,'{:s} {:.3f}'.format(name_dict[idx], rect[-1]),
+                           bbox = dict(facecolor = color, alpha = 0.5),
+                           fontsize = 12, color = 'white')
+      print("showing image {}".format(img_path))
+      plt.savefig("./det_images/{}".format(img_path))
+      #cv2.imshow("det_img",im)
+      #cv2.waitKey()
 
 
 

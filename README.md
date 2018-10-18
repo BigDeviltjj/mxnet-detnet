@@ -1,6 +1,10 @@
-# DetNet in mxnet
+# DetNet : A Backbone network for Object Detection
 
-This repository tries to reproduce the result in [DetNet: A Backbone network for Object Detection](https://arxiv.org/pdf/1804.06215.pdf).
+This repository tries to reproduce the result in [DetNet: A Backbone network for Object Detection](https://arxiv.org/pdf/1804.06215.pdf) using mxnet.
+
+### demo result
+
+![demo](https://github.com/BigDeviltjj/mxnet-detnet/blob/master/det_images/000000321790.jpg)
 
 ### set up environment
 
