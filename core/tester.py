@@ -75,7 +75,7 @@ def im_detect(predictor, data_batch, data_names, scales, cfg):
           image = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
           print(img.shape)
           print(max_scores_val)
-          maxid = max_scores_val.argsort()[-5:]
+          maxid = max_scores_val.argsort()[-30:]
           for i, boxxes in enumerate(bboxes):
             if not i in maxid: continue
             #print("ith box:")
@@ -86,7 +86,7 @@ def im_detect(predictor, data_batch, data_names, scales, cfg):
             print(box)
             cv2.rectangle(image,tuple(box[:2]),tuple(box[2:]),(255,0,0),1)
             cv2.putText(image,names[max_scores[i]]+" "+str(max_scores_val[i]),tuple(box[:2]),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),1)
-          cv2.imwrite("./images/det_img_{:3f}.png".format(np.random.randn()),image)
+          cv2.imwrite("./det_images/det_img_{:3f}.png".format(np.random.randn()),image)
           assert 1, "check the detect image"
           
     return scores_all, pred_boxes_all, data_dict_all

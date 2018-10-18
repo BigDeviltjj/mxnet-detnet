@@ -20,7 +20,9 @@ git clone git https://github.com/BigDeviltjj/mxnet-detnet.git
 
 ### demo
 
-not implemented currently.
+```
+python demo.py
+```
 
 ### train the model
 

@@ -1,0 +1,138 @@
+import argparse
+import mxnet as mx
+import numpy as np
+import os
+import sys
+import cv2
+import pprint
+import logging
+import time
+curr_path = os.path.dirname(__file__)
+sys.path.insert(0,os.path.join(curr_path,'lib'))
+from symbols import detnet
+from dataset import *
+from core.testloader import TestLoader
+from core.tester import Predictor, im_detect
+from utils.load_model import load_param
+from config.config import config, update_config
+from utils.image import transform
+from utils.create_logger import create_logger
+from nms.nms import py_nms
+
+names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
+               'bus', 'train', 'truck', 'boat', 'traffic light',
+               'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird',
+               'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear',
+               'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie',
+               'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
+               'kite', 'baseball bat', 'baseball glove', 'skateboard',
+               'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup',
+               'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
+               'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
+               'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed',
+               'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
+               'keyboard', 'cell phone', 'microwave', 'oven', 'toaster',
+               'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors',
+               'teddy bear', 'hair drier', 'toothbrush']
+name_dict = dict(zip(range(80),names))
+DEBUG = True
+def parse_args():
+    parser = argparse.ArgumentParser(description='demo of detnet network')
+    # general
+    parser.add_argument('--cfg', help='experiment configure file name', default='./cfgs/detnet.yaml', type=str)
+
+    args, rest = parser.parse_known_args()
+
+    parser.add_argument('--thresh', help='valid detection threshold', default=0.5, type=float)
+    parser.add_argument('--image', help='image path', default='./images', type=str)
+    args = parser.parse_args()
+    update_config(args.cfg)
+    return args
+
+def demo(cfg, 
+              ctx, prefix, epoch,
+              has_rpn, thresh,image_path):
+    pprint.pprint(cfg)
+    if has_rpn:
+        sym_instance = eval(cfg.symbol+'.'+cfg.symbol)()
+        sym = sym_instance.get_symbol(cfg, is_train = False)
+    else:
+        assert False,'does not support'
+
+    _, arg_params, aux_params = mx.model.load_checkpoint(prefix, epoch)
+    
+    stride = cfg.network.IMAGE_STRIDE 
+    data = {}
+    label = None
+    predictor = Predictor(sym, ['data','im_info'],None,ctx,None, [('data',(1,3,800,1200)),('im_info',(1,3))],None, arg_params,aux_params)
+    for img_path in sorted(os.listdir(image_path)):
+      im = cv2.imread(os.path.join(image_path,img_path),cv2.IMREAD_COLOR)
+      print(stride)
+      if not stride == 0:
+        im_height = int(np.ceil(im.shape[0]/float(stride)) * stride)
+        im_width = int(np.ceil(im.shape[1] / float(stride)) * stride)
+        im_channel = im.shape[2]
+        padded_im = np.zeros((im_height, im_width, im_channel))
+        padded_im[:im.shape[0],:im.shape[1],:] = im
+      else:
+        im_height,im_width = im.shape[:2]
+        padded_im = im.copy()
+
+
+      im_tensor = transform(padded_im, cfg.network.PIXEL_MEANS) 
+      data['data'] = mx.nd.array(im_tensor)
+      data['im_info'] = mx.nd.array([[im_height, im_width, 1]])
+      [print(k,v.shape) for k,v in data.items()]
+      data_batch = mx.io.DataBatch(data=[data['data'],data['im_info']],label=[],
+                                   provide_data = [(k,v.shape) for k,v in data.items()],
+                                   provide_label = None)
+      
+      scores_all, pred_boxes_all, data_dict_all = im_detect(predictor, data_batch, ['data','im_info'],[1],cfg)
+    
+      num_classes = cfg.dataset.NUM_CLASSES
+      
+      all_boxes = [[] for _ in range(num_classes)]
+      scores = scores_all[0]
+      boxes = pred_boxes_all[0]
+      cls = scores.argmax(axis = 1)
+      cls_scores = scores.max(axis = 1)
+      for idx in range(1, num_classes):
+        keep_idx = np.where(cls == idx)[0]
+        cls_boxes = boxes[keep_idx, idx * 4: (idx + 1) * 4]
+        cls_score = cls_scores[keep_idx,np.newaxis]
+        cls_dets = np.hstack((cls_boxes, cls_score)).copy()
+        all_boxes[idx] = cls_dets
+        
+      for idx in range(1, num_classes):
+          keep = py_nms(all_boxes[idx],cfg.TEST.NMS)
+          all_boxes[idx] = all_boxes[idx][keep,:]
+          for rect in all_boxes[idx]:
+            tl = tuple(rect[:2].astype(np.int64))
+            br = tuple(rect[2:4].astype(np.int64))
+            color = tuple(map(int,np.random.randint(0,255,size=(3))))
+            cv2.rectangle(im,tl,br,color,1)
+            cv2.putText(im,name_dict[idx] + " " + str(int(rect[-1]*100)),tl,cv2.FONT_HERSHEY_SIMPLEX,2,color,1)
+      print("detecting image {}".format(img_path))
+      cv2.imshow("det_img",im)
+      cv2.waitKey()
+
+
+
+    
+if __name__ =="__main__":
+    args = parse_args()
+    
+    ctx = [mx.gpu(int(i)) for i in config.gpus.split(',')]
+    ctx = [ctx[0]]
+    if DEBUG:
+      pass
+    print(args)
+    logger, final_output_path = create_logger(config.output_path, args.cfg, config.dataset.test_image_set)
+
+    demo(config, 
+              ctx,
+              os.path.join(final_output_path, '..', '_'.join([iset for iset in config.dataset.image_set.split('+')]), config.TRAIN.model_prefix),
+              config.TEST.test_epoch, 
+              config.TEST.HAS_RPN,
+              args.thresh,args.image)
+

@@ -2,7 +2,7 @@
 MXNET_VERSION: "mxnet"
 output_path: "./output/detnet/coco"
 symbol: detnet
-gpus: '0,2,3'
+gpus: '0'
 CLASS_AGNOSTIC: false
 SCALES:
 - 800
