@@ -5,6 +5,7 @@ This repository tries to reproduce the result in [DetNet: A Backbone network for
 ### set up environment
 
 1.clone this repository into the directory.
+
 ```
 git clone git https://github.com/BigDeviltjj/mxnet-detnet.git
 ```
@@ -14,6 +15,8 @@ git clone git https://github.com/BigDeviltjj/mxnet-detnet.git
 3.run`sh init.sh`.
 
 4.specific requirements can be obtained from error message when running the program.
+
+5.please make sure to clone the lastest commit version of this repository
 
 ### demo
 
@@ -27,22 +30,16 @@ python train_end2end.py
 
 ### evaluate the model
 
-not implemented currently.
-
-### any other functions you might need
-
-not implemented currently.
+```
+python test.py
+```
 
 ### TODO
 
-* test part code(finished)
+* offering pretained model
 
-* multigpu support(finished)
+* synchronized batchnorm layer for multi-gpu training
 
-* offer pretained model
-
-* synchronized bn layer for multi-gpu training
-
-* replace roi pooling layer with roi align layer
+* replacing roi pooling layer with roi align layer
 
 
