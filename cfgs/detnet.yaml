@@ -2,13 +2,13 @@
 MXNET_VERSION: "mxnet"
 output_path: "./output/detnet/coco"
 symbol: detnet
-gpus: '2,3'
+gpus: '0,2,3'
 CLASS_AGNOSTIC: false
 SCALES:
 - 800
 - 1333
-# TEST_SCALES: [[800, 1280]] # single scale testing
-TEST_SCALES: [[480, 800], [576, 900], [688, 1100], [800, 1200], [1200, 1600], [1400, 2000]] # multi-scale testing
+TEST_SCALES: [[800, 1280]] # single scale testing
+#TEST_SCALES: [[480, 800], [576, 900], [688, 1100], [800, 1200], [1200, 1600], [1400, 2000]] # multi-scale testing
 default:
   frequent: 1
   kvstore: device
@@ -129,8 +129,8 @@ TEST:
   # RPN proposal
   CXX_PROPOSAL: false
   RPN_NMS_THRESH: 0.7
-  RPN_PRE_NMS_TOP_N: 12000
-  RPN_POST_NMS_TOP_N: 2000
+  RPN_PRE_NMS_TOP_N: 6000
+  RPN_POST_NMS_TOP_N: 1000
   RPN_MIN_SIZE: 0
   # RPN generate proposal
   PROPOSAL_NMS_THRESH: 0.7

@@ -35,9 +35,14 @@ not implemented currently.
 
 ### TODO
 
-* test part code
+* test part code(finished)
 
-* multigpu support
+* multigpu support(finished)
 
 * offer pretained model
+
+* synchronized bn layer for multi-gpu training
+
+* replace roi pooling layer with roi align layer
+
 

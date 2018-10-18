@@ -33,16 +33,12 @@ def im_detect(predictor, data_batch, data_names, scales, cfg):
 
         im_shape = data_dict['data'].shape
         scores = output['cls_prob_reshape_output'].asnumpy()[0]
-        print(cfg.TRAIN.BBOX_STDS)
         stds = np.tile(np.array(cfg.TRAIN.BBOX_STDS),cfg.dataset.NUM_CLASSES)
         bbox_deltas = output['bbox_pred_reshape_output'].asnumpy()[0] *stds
-        print(bbox_deltas.shape)
         pred_boxes = bbox_pred(rois,bbox_deltas)
         pred_boxes = clip_boxes(pred_boxes, im_shape[-2:])
         pred_boxes = pred_boxes / scale
 
-        print("scale ",scale)
-        print("pred after scale:", pred_boxes)
         scores_all.append(scores)
         pred_boxes_all.append(pred_boxes)
         if DEBUG:
@@ -201,7 +197,7 @@ def pred_eval(predictor, test_data, imdb, cfg, vis = False, thresh = 1e-3, logge
                     keep = np.where(all_boxes[j][idx_im][:,-1] >= image_thresh)[0]
                     all_boxes[j][idx_im] = all_boxes[j][idx_im][keep,:]
         
-    with open(det_fie, 'wb') as f:
+    with open(det_file, 'wb') as f:
         pickle.dump(all_boxes, f, protocol = pickle.HIGHEST_PROTOCOL)
 
     info_str = imdb.evaluate_detections(all_boxes)

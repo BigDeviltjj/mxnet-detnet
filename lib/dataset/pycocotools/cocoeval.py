@@ -315,7 +315,7 @@ class COCOeval:
                 Na = a0*I0
                 for m, maxDet in enumerate(m_list):
                     E = [self.evalImgs[Nk+Na+i] for i in i_list]
-                    E = filter(None, E)
+                    E = list(filter(None, E))
                     if len(E) == 0:
                         continue
                     dtScores = np.concatenate([e['dtScores'][0:maxDet] for e in E])
