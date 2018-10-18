@@ -53,7 +53,7 @@ def coco_results_one_category_kernel(data_pack):
             result = [{'image_id': index,
                        'category_id': cat_id,
                        'bbox': [xs[k], ys[k], ws[k], hs[k]],
-                       'score': scores[k]} for k in xrange(dets.shape[0])]
+                       'score': scores[k]} for k in range(dets.shape[0])]
         # elif ann_type == 'segm':
         #     width = im_info['width']
         #     height = im_info['height']
@@ -333,7 +333,7 @@ class coco(IMDB):
         info_str = self._print_detection_metrics(coco_eval)
 
         eval_file = os.path.join(res_folder, 'detections_%s_results.pkl' % self.image_set)
-        with open(eval_file, 'w') as f:
+        with open(eval_file, 'wb') as f:
             pickle.dump(coco_eval, f, pickle.HIGHEST_PROTOCOL)
         print('coco eval results saved to %s' % eval_file)
         info_str +=  'coco eval results saved to %s\n' % eval_file
