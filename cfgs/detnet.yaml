@@ -2,7 +2,7 @@
 MXNET_VERSION: "mxnet"
 output_path: "./output/detnet/coco"
 symbol: detnet
-gpus: '0'
+gpus: '3'
 CLASS_AGNOSTIC: false
 SCALES:
 - 800
@@ -42,7 +42,7 @@ dataset:
   NUM_CLASSES: 81
   dataset: coco
   dataset_path: "./data/coco"
-  image_set: train2017
+  image_set: train2014+valminusminival2014
   # image_set: minival2014
   root_path: "./data"
   test_image_set: val2017
@@ -54,7 +54,7 @@ TRAIN:
   warmup: true
   lr_step: '5,7'
   wd: 0.0001
-  begin_epoch: 2
+  begin_epoch: 5
   end_epoch: 8
   model_prefix: 'detnet_coco'
   # whether resume training
@@ -139,5 +139,5 @@ TEST:
   PROPOSAL_MIN_SIZE: 0
   # RCNN nms
   NMS: 0.3
-  test_epoch: 2
+  test_epoch: 6
   max_per_image: 100

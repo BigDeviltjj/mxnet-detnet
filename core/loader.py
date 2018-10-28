@@ -174,7 +174,7 @@ class PyramidAnchorIterator(mx.io.DataIter):
 
             data, rpn_label = get_rpn_batch(iroidb, self.cfg)
             data['gt_boxes'] = rpn_label['gt_boxes'][np.newaxis,:,:]
-            data_shape = {k:v.shape for k,v in data.items()}
+            data_shape = {k:list(v.shape) for k,v in data.items()}
             if max_data == {} :
               max_data = data_shape
             else: 

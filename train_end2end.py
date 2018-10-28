@@ -76,8 +76,8 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
 
     if config.TRAIN.RESUME:
         print('continue training from ',begin_epoch)
-#        arg_params, aux_params = load_param(prefix, begin_epoch, convert = True)
-        _, arg_params, aux_params = mx.model.load_checkpoint(prefix,begin_epoch)
+        arg_params, aux_params = load_param(prefix, begin_epoch, convert = True)
+#        _, arg_params, aux_params = mx.model.load_checkpoint(prefix,begin_epoch)
     else:
         arg_params, aux_params = None, None
         #sym_instance.init_weight(config, arg_params, aux_params)
@@ -102,9 +102,9 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
     eval_metrics = mx.metric.CompositeEvalMetric()
     for child_metric in [rpn_eval_metric, rpn_cls_metric, rpn_bbox_metric, rpn_fg_metric, eval_fg_metric, eval_metric, cls_metric, bbox_metric]:
         eval_metrics.add(child_metric)
-    batch_end_callback = [mx.callback.Speedometer(train_data.batch_size,frequent = 1,auto_reset = False)]
+    batch_end_callback = [mx.callback.Speedometer(train_data.batch_size,frequent = 20,auto_reset = False)]
     epoch_end_callback = [mx.callback.do_checkpoint(prefix, period = 1)]
-    base_lr = lr
+    base_lr = lr * batch_size
     lr_factor = config.TRAIN.lr_factor
     lr_epoch = [float(epoch) for epoch in lr_step.split(',')]
     lr_epoch_diff = [epoch - begin_epoch for epoch in lr_epoch if epoch > begin_epoch]
