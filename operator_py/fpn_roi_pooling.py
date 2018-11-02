@@ -38,14 +38,16 @@ class FPNROIPoolingOperator(mx.operator.CustomOp):
             mx.autograd.mark_variables([in_data[i] for i in range(self.num_strides)],self.in_grad_hist_list)
             with mx.autograd.record():
                 for i in range(self.num_strides):
-                    self.roi_pool[i] = mx.nd.ROIPooling(in_data[i],mx.nd.array(rois_p[i],in_data[i].context),(7,7),spatial_scale = 1.0 / self.feat_strides[i])
-                roi_pool = mx.nd.concatenate(self.roi_pool, axis = 0)
+                    #self.roi_pool[i] = mx.nd.ROIPooling(in_data[i],mx.nd.array(rois_p[i],in_data[i].context),(7,7),spatial_scale = 1.0 / self.feat_strides[i])
+                    self.roi_pool[i] = mx.contrib.nd.ROIAlign(in_data[i],mx.nd.array(rois_p[i],in_data[i].context),(14,14),spatial_scale = 1.0 / self.feat_strides[i])
+                roi_pool = mx.nd.concat(*self.roi_pool, dim = 0)
         else:
             roi_pool = [None for _ in range(self.num_strides)]
             for i in range(self.num_strides):
-                roi_pool[i] = mx.nd.ROIPooling(in_data[i], mx.nd.array(rois_p[i], in_data[i].context), (7, 7), spatial_scale=1.0 / self.feat_strides[i])
+                #roi_pool[i] = mx.nd.ROIPooling(in_data[i], mx.nd.array(rois_p[i], in_data[i].context), (7, 7), spatial_scale=1.0 / self.feat_strides[i])
+                roi_pool[i] = mx.contrib.nd.ROIAlign(in_data[i],mx.nd.array(rois_p[i],in_data[i].context),(14,14),spatial_scale = 1.0 / self.feat_strides[i])
 
-            roi_pool = mx.nd.concatenate(roi_pool, axis=0)
+            roi_pool = mx.nd.concat(*roi_pool, dim=0)
         roi_pool = mx.nd.take(roi_pool, mx.nd.array(rois_idx, roi_pool.context))
         self.assign(out_data[0],req[0],roi_pool)
     
@@ -67,7 +69,7 @@ class FPNROIPoolingOperator(mx.operator.CustomOp):
 
 @mx.operator.register('fpn_roi_pooling')
 class FPNROIPoolingProp(mx.operator.CustomOpProp):
-    def __init__(self, feat_strides='(4,8,16,16,16)',pooled_height = '7',pooled_width='7',output_dim='256'):
+    def __init__(self, feat_strides='(4,8,16,16,16)',pooled_height = '14',pooled_width='14',output_dim='256'):
         super(FPNROIPoolingProp,self).__init__()
         self.pooled_height = int(pooled_height)
         self.pooled_width = int(pooled_width)

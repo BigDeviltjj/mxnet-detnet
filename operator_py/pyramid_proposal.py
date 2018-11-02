@@ -48,18 +48,18 @@ class PyramidProposalOperator(mx.operator.CustomOp):
             raise ValueError('sorry, only support single image')
         
         cls_prob_dict = {
-            'stride64': in_data[4],
-            'stride32': in_data[3],
-            'stride16': in_data[2],
-            'stride8': in_data[1],
-            'stride4': in_data[0],
+            'p6': in_data[4],
+            'p5': in_data[3],
+            'p4': in_data[2],
+            'p3': in_data[1],
+            'p2': in_data[0],
         }
         bbox_pred_dict = {
-            'stride64': in_data[9],
-            'stride32': in_data[8],
-            'stride16': in_data[7],
-            'stride8': in_data[6],
-            'stride4': in_data[5],
+            'p6': in_data[9],
+            'p5': in_data[8],
+            'p4': in_data[7],
+            'p3': in_data[6],
+            'p2': in_data[5],
         }
         #print(in_data[0])
         pre_nms_topN = self._rpn_pre_nms_top_n
@@ -71,8 +71,8 @@ class PyramidProposalOperator(mx.operator.CustomOp):
         for idx, s in enumerate(self._feat_stride):
             stride = int(s)
             sub_anchors = generate_anchors(base_size = stride, scales = [self._scales[idx]],ratios = self._ratios)
-            scores = cls_prob_dict['stride'+str(s)].asnumpy()[:,self._num_anchors:,:,:]
-            bbox_deltas = bbox_pred_dict['stride'+str(s)].asnumpy()
+            scores = cls_prob_dict['p'+str(idx+2)].asnumpy()[:,self._num_anchors:,:,:]
+            bbox_deltas = bbox_pred_dict['p'+str(idx+2)].asnumpy()
             im_info = in_data[-1].asnumpy()[0,:]
 
             #step 1

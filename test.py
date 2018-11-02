@@ -2,6 +2,8 @@ import argparse
 import mxnet as mx
 import numpy as np
 import os
+os.environ['MXNET_CUDNN_AUTOTUNE_DEFAULT'] = '0'
+os.environ['MXNET_ENABLE_GPU_P2P'] = '0'
 import sys
 import cv2
 import pprint
@@ -49,19 +51,17 @@ def test_rcnn(cfg, dataset, image_set, root_path, dataset_path,
         assert False,'do not support'
 
     test_data = TestLoader(roidb,cfg,batch_size = len(ctx),shuffle = shuffle, has_rpn = has_rpn)
-    if DEBUG:
-      test_data.reset()
-      print(test_data.provide_data)
-      print(test_data.provide_label)
-      info, it = test_data.next()
-      print(it)
-      print(info)
-      import pdb
-      pdb.set_trace()
-      print(info.data[0])
-      print(info.label[0])
-      print(info.provide_data)
-      print(info.provide_label)
+#    if DEBUG:
+#      test_data.reset()
+#      print(test_data.provide_data)
+#      print(test_data.provide_label)
+#      info, it = test_data.next()
+#      print(it)
+#      print(info)
+#      print(info.data[0])
+#      print(info.label[0])
+#      print(info.provide_data)
+#      print(info.provide_label)
 
 
 

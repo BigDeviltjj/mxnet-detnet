@@ -2,6 +2,9 @@ import argparse
 import mxnet as mx
 import numpy as np
 import os
+os.environ['MXNET_CUDNN_AUTOTUNE_DEFAULT'] = '0'
+os.environ['MXNET_ENABLE_GPU_P2P'] = '0'
+
 import sys
 import re
 import shutil
@@ -56,15 +59,6 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
                                    anchor_ratios = config.network.ANCHOR_RATIOS, aspect_grouping = config.TRAIN.ASPECT_GROUPING,
                                    allowed_border = np.inf)
 
-    if DEBUG:
-      train_data.reset()
-      while True:
-        it = train_data.next()
-        [print(i.shape) for i in it.data]
-        [print(i.shape) for i in it.label]
-        print(it.provide_data)
-        print(it.provide_label)
-      train_data.reset()
     max_data_shape = [('data',(config.TRAIN.BATCH_IMAGES,3,max([v[0] for v in config.SCALES]),max([int(v[1]//16*16) for v in config.SCALES])))]
     max_data_shape,max_label_shape = train_data.infer_shape(max_data_shape)
     max_data_shape.append(('gt_boxes',(config.TRAIN.BATCH_IMAGES,100,5)))
@@ -74,19 +68,33 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
     pprint.pprint(data_shape_dict)
     sym_instance.infer_shape(data_shape_dict)
 
+    fixed_param_names = None
     if config.TRAIN.RESUME:
         print('continue training from ',begin_epoch)
         arg_params, aux_params = load_param(prefix, begin_epoch, convert = True)
 #        _, arg_params, aux_params = mx.model.load_checkpoint(prefix,begin_epoch)
     else:
-        arg_params, aux_params = None, None
+        print('loading pretrained model from {}'.format(pretrained+'_'+str(begin_epoch)))
+        arg_params, aux_params = load_param(pretrained, begin_epoch, convert = True)
+        sym_instance.init_weight(config, arg_params, aux_params)
+        fixed_param_names = list()
+
+        if config.network.FIXED_PARAMS is not None:
+            names = sym.list_arguments()
+            for name in names:
+                for pre in config.network.FIXED_PARAMS:
+                    if pre in name:
+                        fixed_param_names.append(name)
+                        break
+
+        #arg_params, aux_params = None, None
         #sym_instance.init_weight(config, arg_params, aux_params)
 
     #sym_instance.check_parameter_shapes(arg_params, aux_params, data_shape_dict)
     data_names = [k[0] for k in train_data.provide_data]
     label_names = [k[0] for k in train_data.provide_label]
     mod = mx.mod.Module(sym,data_names = data_names,label_names = label_names,
-                 logger = logger, context = ctx)
+                 logger = logger, context = ctx, fixed_param_names = fixed_param_names)
 
 
 
@@ -104,7 +112,7 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
         eval_metrics.add(child_metric)
     batch_end_callback = [mx.callback.Speedometer(train_data.batch_size,frequent = 20,auto_reset = False)]
     epoch_end_callback = [mx.callback.do_checkpoint(prefix, period = 1)]
-    base_lr = lr * batch_size
+    base_lr = lr 
     lr_factor = config.TRAIN.lr_factor
     lr_epoch = [float(epoch) for epoch in lr_step.split(',')]
     lr_epoch_diff = [epoch - begin_epoch for epoch in lr_epoch if epoch > begin_epoch]
@@ -120,26 +128,6 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
         
     if not isinstance(train_data,mx.io.PrefetchingIter):
         train_data = mx.io.PrefetchingIter(train_data)
-    if DEBUG and 0:
-        train_data.reset()
-        for it in train_data:
-          print(it.provide_data)
-          print(it.provide_label)
-        mod.bind(data_shapes=train_data.provide_data, label_shapes=train_data.provide_label,
-                  for_training=True, force_rebind=False)
-        mod.init_params(arg_params=arg_params, aux_params=aux_params,
-                         allow_missing=True)
-        mod.init_optimizer(optimizer_params = optimizer_params)
-        eval_metrics.reset()
-        next_data_batch = train_data.next()
-
-        for i in range(100):
-            print(i)
-            mod.forward_backward(next_data_batch)
-            mod.update()
-            mod.update_metric(eval_metrics, next_data_batch.label)
-            print(eval_metrics)
-
 
     mod.fit(train_data,eval_metric = eval_metrics,epoch_end_callback=epoch_end_callback,
             batch_end_callback = batch_end_callback, 
@@ -147,7 +135,8 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
             begin_epoch = begin_epoch,
 	    arg_params = arg_params,
             aux_params = aux_params,
-            num_epoch = end_epoch)
+            num_epoch = end_epoch,
+            allow_missing = True)
 def main():
     args = parse_args()
     print('called with argument:',args)

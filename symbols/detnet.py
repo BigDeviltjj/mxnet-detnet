@@ -15,12 +15,12 @@ class detnet(Symbol):
             self.shared_param_dict[name + '_bias'] = mx.sym.Variable(name + '_bias')
 
     def get_detnet_backbone(self, data, is_train = True, with_dilated=True,  eps=1e-5):
-        use_global_stats  = not is_train
+        use_global_stats  = True#not is_train
         conv1 = mx.symbol.Convolution(name='conv1', data=data, num_filter=64, pad=(3, 3), kernel=(7, 7), stride=(2, 2), no_bias=True)
         bn_conv1 = mx.symbol.BatchNorm(name='bn_conv1', data=conv1, use_global_stats=use_global_stats, fix_gamma=False, eps=eps)
         scale_conv1 = bn_conv1
         conv1_relu = mx.symbol.Activation(name='conv1_relu', data=scale_conv1, act_type='relu')
-        pool1 = mx.symbol.Pooling(name='pool1', data=conv1_relu, pooling_convention='full', pad=(0, 0), kernel=(3, 3), stride=(2, 2), pool_type='max')
+        pool1 = mx.symbol.Pooling(name='pool1', data=conv1_relu, pad=(1, 1), kernel=(3, 3), stride=(2, 2), pool_type='max')
         res2a_branch1 = mx.symbol.Convolution(name='res2a_branch1', data=pool1, num_filter=256, pad=(0, 0), kernel=(1, 1), stride=(1, 1), no_bias=True)
         bn2a_branch1 = mx.symbol.BatchNorm(name='bn2a_branch1', data=res2a_branch1, use_global_stats=use_global_stats, fix_gamma=False, eps=eps)
         scale2a_branch1 = bn2a_branch1
@@ -88,14 +88,14 @@ class detnet(Symbol):
                                            fix_gamma=False, eps=eps)
         scale3a_branch1 = bn3a_branch1
         res3a_branch2a = mx.symbol.Convolution(name='res3a_branch2a', data=res2c_relu, num_filter=128, pad=(0, 0),
-                                               kernel=(1, 1), stride=(2, 2), no_bias=True)
+                                               kernel=(1, 1), stride=(1, 1), no_bias=True)
         bn3a_branch2a = mx.symbol.BatchNorm(name='bn3a_branch2a', data=res3a_branch2a, use_global_stats=use_global_stats,
                                             fix_gamma=False, eps=eps)
         scale3a_branch2a = bn3a_branch2a
         res3a_branch2a_relu = mx.symbol.Activation(name='res3a_branch2a_relu', data=scale3a_branch2a, act_type='relu')
         res3a_branch2b = mx.symbol.Convolution(name='res3a_branch2b', data=res3a_branch2a_relu, num_filter=128,
                                                pad=(1, 1),
-                                               kernel=(3, 3), stride=(1, 1), no_bias=True)
+                                               kernel=(3, 3), stride=(2, 2), no_bias=True)
         bn3a_branch2b = mx.symbol.BatchNorm(name='bn3a_branch2b', data=res3a_branch2b, use_global_stats=use_global_stats,
                                             fix_gamma=False, eps=eps)
         scale3a_branch2b = bn3a_branch2b
@@ -178,14 +178,14 @@ class detnet(Symbol):
                                            fix_gamma=False, eps=eps)
         scale4a_branch1 = bn4a_branch1
         res4a_branch2a = mx.symbol.Convolution(name='res4a_branch2a', data=res3b3_relu, num_filter=256, pad=(0, 0),
-                                               kernel=(1, 1), stride=(2, 2), no_bias=True)
+                                               kernel=(1, 1), stride=(1, 1), no_bias=True)
         bn4a_branch2a = mx.symbol.BatchNorm(name='bn4a_branch2a', data=res4a_branch2a, use_global_stats=use_global_stats,
                                             fix_gamma=False, eps=eps)
         scale4a_branch2a = bn4a_branch2a
         res4a_branch2a_relu = mx.symbol.Activation(name='res4a_branch2a_relu', data=scale4a_branch2a, act_type='relu')
         res4a_branch2b = mx.symbol.Convolution(name='res4a_branch2b', data=res4a_branch2a_relu, num_filter=256,
                                                pad=(1, 1),
-                                               kernel=(3, 3), stride=(1, 1), no_bias=True)
+                                               kernel=(3, 3), stride=(2, 2), no_bias=True)
         bn4a_branch2b = mx.symbol.BatchNorm(name='bn4a_branch2b', data=res4a_branch2b, use_global_stats=use_global_stats,
                                             fix_gamma=False, eps=eps)
         scale4a_branch2b = bn4a_branch2b
@@ -447,7 +447,7 @@ class detnet(Symbol):
         fpn_p2_1x1 = mx.sym.Convolution(data=c2, kernel=(1,1),pad=(0,0),stride = (1,1),num_filter = feature_dim, name = 'fpn_p2_1x1')
         
         fpn_p5_plus = mx.sym.ElementWiseSum(*[fpn_p5_1x1, fpn_p6_1x1],name = 'fpn_p5_sum')
-        fpn_p4_plus = mx.sym.ElementWiseSum(*[fpn_p5_1x1, fpn_p4_1x1],name = 'fpn_p4_sum')
+        fpn_p4_plus = mx.sym.ElementWiseSum(*[fpn_p5_plus, fpn_p4_1x1],name = 'fpn_p4_sum')
         fpn_p4_upsample = mx.symbol.UpSampling(fpn_p4_plus, scale = 2, sample_type = 'nearest', name = 'fpn_p4_upsample')
         fpn_p3_plus = mx.sym.ElementWiseSum(*[fpn_p4_upsample, fpn_p3_1x1],name = 'fpn_p3_sum')
         fpn_p3_upsample = mx.symbol.UpSampling(fpn_p3_plus, scale = 2, sample_type = 'nearest', name = 'fpn_p3_upsample')
@@ -588,6 +588,11 @@ class detnet(Symbol):
             group = mx.sym.Group([rois, cls_prob, bbox_pred])
 
         self.sym = group
+       # group = mx.sym.Group([fpn_p2, fpn_p3,fpn_p4,fpn_p5,fpn_p6])
+       # group = mx.sym.Group([rpn_cls_score_p4, rpn_prob_p4, rpn_bbox_loss_p4, rpn_bbox_pred_p4])
+       # group = mx.sym.Group([rois])
+       # self.sym = group
+
         return group
         
 

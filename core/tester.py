@@ -10,7 +10,23 @@ from nms.nms import py_nms
 DEBUG = False
 if DEBUG:
   import cv2
+  import pdb
 
+names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
+               'bus', 'train', 'truck', 'boat', 'traffic light',
+               'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird',
+               'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear',
+               'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie',
+               'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
+               'kite', 'baseball bat', 'baseball glove', 'skateboard',
+               'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup',
+               'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
+               'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
+               'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed',
+               'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
+               'keyboard', 'cell phone', 'microwave', 'oven', 'toaster',
+               'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors',
+               'teddy bear', 'hair drier', 'toothbrush']
 class Predictor(object):
     def __init__(self, symbol, data_names, label_names, 
                  context = mx.cpu(), max_data_shapes = None,
@@ -42,21 +58,6 @@ def im_detect(predictor, data_batch, data_names, scales, cfg):
         scores_all.append(scores)
         pred_boxes_all.append(pred_boxes)
         if DEBUG:
-          names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
-               'bus', 'train', 'truck', 'boat', 'traffic light',
-               'fire hydrant', 'stop sign', 'parking meter', 'bench', 'bird',
-               'cat', 'dog', 'horse', 'sheep', 'cow', 'elephant', 'bear',
-               'zebra', 'giraffe', 'backpack', 'umbrella', 'handbag', 'tie',
-               'suitcase', 'frisbee', 'skis', 'snowboard', 'sports ball',
-               'kite', 'baseball bat', 'baseball glove', 'skateboard',
-               'surfboard', 'tennis racket', 'bottle', 'wine glass', 'cup',
-               'fork', 'knife', 'spoon', 'bowl', 'banana', 'apple',
-               'sandwich', 'orange', 'broccoli', 'carrot', 'hot dog', 'pizza',
-               'donut', 'cake', 'chair', 'couch', 'potted plant', 'bed',
-               'dining table', 'toilet', 'tv', 'laptop', 'mouse', 'remote',
-               'keyboard', 'cell phone', 'microwave', 'oven', 'toaster',
-               'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors',
-               'teddy bear', 'hair drier', 'toothbrush']
           print("im shape: ",im_shape)
           print(pred_boxes.shape)
           print(scores.shape)
@@ -68,7 +69,7 @@ def im_detect(predictor, data_batch, data_names, scales, cfg):
           bboxes = pred_boxes.copy()[keep]*scale
           max_scores_val = max_scores_val[keep]
           img = data_dict['data'].asnumpy().transpose((0,2,3,1))[0]
-          img += 123
+          img = (img * np.array([[[0.229, 0.224, 0.225]]]) +np.array([[[0.485, 0.456, 0.406]]])) * 255
           img = np.clip(img,0,255)
           img = img.astype(np.uint8)
           print(type(img))
@@ -87,7 +88,7 @@ def im_detect(predictor, data_batch, data_names, scales, cfg):
             cv2.rectangle(image,tuple(box[:2]),tuple(box[2:]),(255,0,0),1)
             cv2.putText(image,names[max_scores[i]]+" "+str(max_scores_val[i]),tuple(box[:2]),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),1)
           cv2.imwrite("./det_images/det_img_{:3f}.png".format(np.random.randn()),image)
-          assert 1, "check the detect image"
+          #pdb.set_trace()
           
     return scores_all, pred_boxes_all, data_dict_all
 def detect_at_single_scale(predictor, data_names, imdb, test_data, cfg, thresh, vis, all_boxes_single_scale, logger):
@@ -111,10 +112,10 @@ def detect_at_single_scale(predictor, data_names, imdb, test_data, cfg, thresh, 
                 cls_boxes = boxes[indexes, j * 4: (j+1) * 4]
                 cls_dets = np.hstack((cls_boxes, cls_scores)).copy()
                 all_boxes_single_scale[j][idx+delta] = cls_dets
-            if vis:
-                boxes_this_image = [[]] + [all_boxes_single_scale[j][idx+delta] for j in range(1,imdb.num_classes)]
-                data_for_vis = data_dict['data'].asnumpy().copy()
-                vis_all_detection(data_for_vis,boxes_this_image, imdb.num_classes, scales, cfg)
+            #if vis:
+            #    boxes_this_image = [[]] + [all_boxes_single_scale[j][idx+delta] for j in range(1,imdb.num_classes)]
+            #    data_for_vis = data_dict['data'].asnumpy().copy()
+            #    vis_all_detection(data_for_vis,boxes_this_image, imdb.num_classes, scales, cfg)
         
         idx += test_data.batch_size
         t3 = time.time() - t
@@ -152,6 +153,7 @@ def pred_eval(predictor, test_data, imdb, cfg, vis = False, thresh = 1e-3, logge
     #    test_data = mx.io.PrefetchingIter(test_data)
 
     max_per_image = cfg.TEST.max_per_image
+
     num_images = imdb.num_images
 
     for test_scale_index, test_scale in enumerate(cfg.TEST_SCALES):
@@ -197,6 +199,32 @@ def pred_eval(predictor, test_data, imdb, cfg, vis = False, thresh = 1e-3, logge
                     keep = np.where(all_boxes[j][idx_im][:,-1] >= image_thresh)[0]
                     all_boxes[j][idx_im] = all_boxes[j][idx_im][keep,:]
         
+
+    if vis:
+        test_data.reset()
+        for i in range(num_images):
+            im_info, data = test_data.next()
+            img = data.data[0].asnumpy().transpose((0,2,3,1))[0]
+            img = (img * np.array([[[0.229, 0.224, 0.225]]]) +np.array([[[0.485, 0.456, 0.406]]])) * 255
+            img = np.clip(img,0,255)
+            img = img.astype(np.uint8)
+            print(type(img))
+            image = cv2.cvtColor(img,cv2.COLOR_BGR2RGB)
+
+            scale = im_info[0,2]
+            for j in range(1,imdb.num_classes):
+                for box in all_boxes[j][i]:
+                    if box[-1] < 0.3: continue
+                    box[:4] = (box[:4] * scale)
+                    box = box.astype(np.int64)
+                    print(box)
+                    cv2.rectangle(image,tuple(box[:2]),tuple(box[2:4]),(255,0,0),1)
+                    cv2.putText(image,names[j], tuple(box[:2]),cv2.FONT_HERSHEY_COMPLEX,1,(0,0,255),1)
+            cv2.imwrite("./det_images/det_img_{}.jpg".format(i),image)
+            print("detected image saved in ./det_images/det_img_{}.jpg".format(i))
+            import pdb
+            pdb.set_trace()
+
     with open(det_file, 'wb') as f:
         pickle.dump(all_boxes, f, protocol = pickle.HIGHEST_PROTOCOL)
 
@@ -205,26 +233,26 @@ def pred_eval(predictor, test_data, imdb, cfg, vis = False, thresh = 1e-3, logge
         logger.info("evaluate detections: \n{}".format(info_str))
 
 
-def vis_all_detection(im_array, detections, class_names, scale, cfg, threshold = 1e-3):
-    import matplotlib.pyplot as plt
-    import random
-    im = image.transform_inverse(im_array, cfg.network.PIXEL_MEANS)
-    plt.imshow(im)
-    for j, name in enumerate(class_names):
-        if name == '__background__':
-            continue
-        color = (random.random(), random.random(),random.random())
-        dets = detections[j]
-        for det in dets:
-            bbox = det[:4] * scale
-            score = det[-1]
-            if score < threshold:
-                continue
-            rec = plt.Rectangle((bbox[0],bbox[1]),bbox[2]-bbox[0],bbox[3]-bbox[1],fill = False,
-                                edgecolor = color, linewidth = 3.5)
-            plt.gca().add_patch(rect)
-            plt.gca().text(bbox[0],bbox[1]-2,
-                           '{:s} {:.3f}'.format(name, score),
-                           bbox = dict(facecolor = color, alpha = 0.5), fontsize = 12, color = 'white')
-    plt.show()    
-
+#def vis_all_detection(im_array, detections, class_names, scale, cfg, threshold = 1e-3):
+#    import matplotlib.pyplot as plt
+#    import random
+#    im = image.transform_inverse(im_array, cfg.network.PIXEL_MEANS)
+#    plt.imshow(im)
+#    for j, name in enumerate(class_names):
+#        if name == '__background__':
+#            continue
+#        color = (random.random(), random.random(),random.random())
+#        dets = detections[j]
+#        for det in dets:
+#            bbox = det[:4] * scale
+#            score = det[-1]
+#            if score < threshold:
+#                continue
+#            rec = plt.Rectangle((bbox[0],bbox[1]),bbox[2]-bbox[0],bbox[3]-bbox[1],fill = False,
+#                                edgecolor = color, linewidth = 3.5)
+#            plt.gca().add_patch(rect)
+#            plt.gca().text(bbox[0],bbox[1]-2,
+#                           '{:s} {:.3f}'.format(name, score),
+#                           bbox = dict(facecolor = color, alpha = 0.5), fontsize = 12, color = 'white')
+#    plt.show()    
+#

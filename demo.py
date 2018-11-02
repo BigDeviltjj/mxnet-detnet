@@ -15,7 +15,7 @@ from core.testloader import TestLoader
 from core.tester import Predictor, im_detect
 from utils.load_model import load_param
 from config.config import config, update_config
-from utils.image import transform
+from utils.image import transform, resize
 from utils.create_logger import create_logger
 from nms.nms import py_nms
 
@@ -53,35 +53,28 @@ def demo(cfg,
               ctx, prefix, epoch,
               has_rpn, thresh,image_path):
     pprint.pprint(cfg)
+    data = mx.sym.Variable('data')
     if has_rpn:
         sym_instance = eval(cfg.symbol+'.'+cfg.symbol)()
         sym = sym_instance.get_symbol(cfg, is_train = False)
     else:
         assert False,'does not support'
 
-    _, arg_params, aux_params = mx.model.load_checkpoint(prefix, epoch)
+    arg_params, aux_params = load_param(prefix, epoch)
     
     stride = cfg.network.IMAGE_STRIDE 
     data = {}
     label = None
     predictor = Predictor(sym, ['data','im_info'],None,ctx,None, [('data',(1,3,800,1200)),('im_info',(1,3))],None, arg_params,aux_params)
     for img_path in sorted(os.listdir(image_path)):
-      im = cv2.imread(os.path.join(image_path,img_path),cv2.IMREAD_COLOR)
-      print(stride)
-      if not stride == 0:
-        im_height = int(np.ceil(im.shape[0]/float(stride)) * stride)
-        im_width = int(np.ceil(im.shape[1] / float(stride)) * stride)
-        im_channel = im.shape[2]
-        padded_im = np.zeros((im_height, im_width, im_channel))
-        padded_im[:im.shape[0],:im.shape[1],:] = im
-      else:
-        im_height,im_width = im.shape[:2]
-        padded_im = im.copy()
+      im = cv2.imread(os.path.join(image_path,img_path),cv2.IMREAD_COLOR)[:,:,::-1]
+      im, im_scale = resize(im, cfg.SCALES[0][0], cfg.SCALES[0][1], stride = cfg.network.IMAGE_STRIDE)
+      im_show = im.copy()/255
+      padded_im = transform(im, cfg.network.PIXEL_MEANS, cfg.network.PIXEL_STDS)
 
-
-      im_tensor = transform(padded_im, cfg.network.PIXEL_MEANS) 
-      data['data'] = mx.nd.array(im_tensor)
-      data['im_info'] = mx.nd.array([[im_height, im_width, 1]])
+      b, c, im_height, im_width = padded_im.shape
+      data['data'] = mx.nd.array(padded_im)
+      data['im_info'] = mx.nd.array([[im_height, im_width, im_scale]])
       [print(k,v.shape) for k,v in data.items()]
       data_batch = mx.io.DataBatch(data=[data['data'],data['im_info']],label=[],
                                    provide_data = [(k,v.shape) for k,v in data.items()],
@@ -105,12 +98,14 @@ def demo(cfg,
         
       import matplotlib.pyplot as plt
       plt.switch_backend('agg') 
-      im_show = plt.imread(os.path.join(image_path,img_path))
+      #im_show = plt.imread(os.path.join(image_path,img_path))
       plt.imshow(im_show)
       for idx in range(1, num_classes):
           keep = py_nms(all_boxes[idx],cfg.TEST.NMS)
           all_boxes[idx] = all_boxes[idx][keep,:]
           for rect in all_boxes[idx]:
+            if rect[-1] < 0.3:
+                continue
             tl = tuple(rect[:2].astype(np.int64))
             br = tuple(rect[2:4].astype(np.int64))
             color = np.random.rand(3)
@@ -123,7 +118,7 @@ def demo(cfg,
             plt.gca().text(tl[0],tl[1]-2,'{:s} {:.3f}'.format(name_dict[idx], rect[-1]),
                            bbox = dict(facecolor = color, alpha = 0.5),
                            fontsize = 12, color = 'white')
-      print("showing image {}".format(img_path))
+      print("saving image {} in ./det_images".format(img_path))
       plt.savefig("./det_images/{}".format(img_path))
       #cv2.imshow("det_img",im)
       #cv2.waitKey()
