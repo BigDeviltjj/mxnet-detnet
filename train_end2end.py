@@ -48,16 +48,12 @@ def train_net(args, ctx, pretrained, epoch, prefix, begin_epoch, end_epoch, lr, 
     logger.info('training config:{}\n'.format(pprint.pformat(config)))
 
     image_sets = [iset for iset in config.dataset.image_set.split('+')]
-    roidbs = [load_gt_roidb(config.dataset.dataset,image_set, config.dataset.root_path, config.dataset.dataset_path,
-                            flip = config.TRAIN.FLIP) for image_set in image_sets]
+    roidbs = [load_gt_roidb(config.dataset.dataset,image_set, config.dataset.root_path, config.dataset.dataset_path,flip = config.TRAIN.FLIP) for image_set in image_sets]
         
     roidb = merge_roidb(roidbs)
     roidb = filter_roidb(roidb,config)
     
-    train_data = PyramidAnchorIterator(feat_sym, roidb, config,batch_size = input_batch_size, shuffle = config.TRAIN.SHUFFLE,
-                                   ctx = ctx, feat_strides = config.network.RPN_FEAT_STRIDE, anchor_scales = config.network.ANCHOR_SCALES,
-                                   anchor_ratios = config.network.ANCHOR_RATIOS, aspect_grouping = config.TRAIN.ASPECT_GROUPING,
-                                   allowed_border = np.inf)
+    train_data = PyramidAnchorIterator(feat_sym, roidb, config,batch_size = input_batch_size, shuffle = config.TRAIN.SHUFFLE,ctx = ctx, feat_strides = config.network.RPN_FEAT_STRIDE, anchor_scales = config.network.ANCHOR_SCALES,anchor_ratios = config.network.ANCHOR_RATIOS, aspect_grouping = config.TRAIN.ASPECT_GROUPING,allowed_border = np.inf)
 
     max_data_shape = [('data',(config.TRAIN.BATCH_IMAGES,3,max([v[0] for v in config.SCALES]),max([int(v[1]//16*16) for v in config.SCALES])))]
     max_data_shape,max_label_shape = train_data.infer_shape(max_data_shape)

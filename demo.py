@@ -68,9 +68,10 @@ def demo(cfg,
     predictor = Predictor(sym, ['data','im_info'],None,ctx,None, [('data',(1,3,800,1200)),('im_info',(1,3))],None, arg_params,aux_params)
     for img_path in sorted(os.listdir(image_path)):
       im = cv2.imread(os.path.join(image_path,img_path),cv2.IMREAD_COLOR)[:,:,::-1]
-      im, im_scale = resize(im, cfg.SCALES[0][0], cfg.SCALES[0][1], stride = cfg.network.IMAGE_STRIDE)
-      im_show = im.copy()/255
-      padded_im = transform(im, cfg.network.PIXEL_MEANS, cfg.network.PIXEL_STDS)
+      im_show = im.copy().astype(float)/255
+      im = transform(im, cfg.network.PIXEL_MEANS, cfg.network.PIXEL_STDS)
+      padded_im, im_scale = resize(im, cfg.SCALES[0][0], cfg.SCALES[0][1], stride = cfg.network.IMAGE_STRIDE)
+      padded_im = padded_im.transpose(2,0,1)[None,:,:,:]
 
       b, c, im_height, im_width = padded_im.shape
       data['data'] = mx.nd.array(padded_im)

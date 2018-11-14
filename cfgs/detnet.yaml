@@ -53,10 +53,10 @@ dataset:
   NUM_CLASSES: 81
   dataset: coco
   dataset_path: "./data/coco"
-  image_set: train2014+valminusminival2014
+  image_set: train2017
   # image_set: minival2014
   root_path: "./data"
-  test_image_set: minival2014
+  test_image_set: val2017 #minival2014
   proposal: detnet
 TRAIN:
   lr: 0.0005
@@ -67,7 +67,7 @@ TRAIN:
   wd: 0.0001
   begin_epoch: 0
   end_epoch: 11
-  model_prefix: 'beta_cluster'
+  model_prefix: 'detnet_coco'
   # whether resume training
   RESUME: false
   # whether flip image
@@ -150,5 +150,5 @@ TEST:
   PROPOSAL_MIN_SIZE: 0
   # RCNN nms
   NMS: 0.3
-  test_epoch: 3
+  test_epoch: 4
   max_per_image: 100

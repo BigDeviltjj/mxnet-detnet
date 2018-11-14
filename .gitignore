@@ -3,3 +3,5 @@
 .vscode/
 /output/
 __pycache__/
+show_det_result.ipynb
+/info/
