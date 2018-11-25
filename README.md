@@ -40,7 +40,7 @@ detected images will be saved in det_images/
 
 ### train the model
 
-You need to put the coco2017 dataset in data/ folder, and download pretrained model from [detnet-0000.params](https://drive.google.com/drive/folders/1Aon21uVFEsWTzDG2m1AMuo8ka-YZlRS3). Then put them in folder model/pretrained_mode, then run
+You need to put the coco2017 dataset in data/ folder, and download pretrained model from [detnet59-0000.params](https://drive.google.com/drive/folders/1Aon21uVFEsWTzDG2m1AMuo8ka-YZlRS3). Then put them in folder model/pretrained_mode, then run
 
 ```
 python train_end2end.py
