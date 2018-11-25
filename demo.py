@@ -34,7 +34,7 @@ names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
                'keyboard', 'cell phone', 'microwave', 'oven', 'toaster',
                'sink', 'refrigerator', 'book', 'clock', 'vase', 'scissors',
                'teddy bear', 'hair drier', 'toothbrush']
-name_dict = dict(zip(range(80),names))
+name_dict = dict(zip(range(81),names))
 DEBUG = True
 def parse_args():
     parser = argparse.ArgumentParser(description='demo of detnet network')
@@ -49,8 +49,7 @@ def parse_args():
     update_config(args.cfg)
     return args
 
-def demo(cfg, 
-              ctx, prefix, epoch,
+def demo(cfg, ctx, prefix, epoch,
               has_rpn, thresh,image_path):
     pprint.pprint(cfg)
     data = mx.sym.Variable('data')
@@ -69,9 +68,8 @@ def demo(cfg,
     for img_path in sorted(os.listdir(image_path)):
       im = cv2.imread(os.path.join(image_path,img_path),cv2.IMREAD_COLOR)[:,:,::-1]
       im_show = im.copy().astype(float)/255
-      im = transform(im, cfg.network.PIXEL_MEANS, cfg.network.PIXEL_STDS)
-      padded_im, im_scale = resize(im, cfg.SCALES[0][0], cfg.SCALES[0][1], stride = cfg.network.IMAGE_STRIDE)
-      padded_im = padded_im.transpose(2,0,1)[None,:,:,:]
+      im, im_scale = resize(im, cfg.SCALES[0][0], cfg.SCALES[0][1], stride = cfg.network.IMAGE_STRIDE)
+      padded_im = transform(im, cfg.network.PIXEL_MEANS, cfg.network.PIXEL_STDS)
 
       b, c, im_height, im_width = padded_im.shape
       data['data'] = mx.nd.array(padded_im)
@@ -107,6 +105,8 @@ def demo(cfg,
           for rect in all_boxes[idx]:
             if rect[-1] < 0.3:
                 continue
+            print(rect, im_show.shape)
+            rect[:4] /= im_scale 
             tl = tuple(rect[:2].astype(np.int64))
             br = tuple(rect[2:4].astype(np.int64))
             color = np.random.rand(3)
@@ -137,8 +137,7 @@ if __name__ =="__main__":
     print(args)
     logger, final_output_path = create_logger(config.output_path, args.cfg, config.dataset.test_image_set)
 
-    demo(config, 
-              ctx,
+    demo(config, ctx,
               os.path.join(final_output_path, '..', '_'.join([iset for iset in config.dataset.image_set.split('+')]), config.TRAIN.model_prefix),
               config.TEST.test_epoch, 
               config.TEST.HAS_RPN,

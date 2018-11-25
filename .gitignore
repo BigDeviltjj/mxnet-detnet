@@ -5,3 +5,5 @@
 __pycache__/
 show_det_result.ipynb
 /info/
+images/
+det_images/

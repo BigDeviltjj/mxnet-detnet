@@ -66,6 +66,7 @@ def test_rcnn(cfg, dataset, image_set, root_path, dataset_path,
 
 
     arg_params, aux_params = load_param(prefix, epoch, process = True)
+    pprint.pprint("loading from {}-{} ".format(prefix,str(epoch)))
 
     data_shape_dict = dict(test_data.provide_data)
     sym_instance.infer_shape(data_shape_dict)

@@ -6,11 +6,10 @@ import numpy as np
 
 from utils import image
 from bbox.bbox_transform import bbox_pred, clip_boxes
-from nms.nms import py_nms
+from nms.nms import py_nms, soft_nms
+import cv2
+import pdb
 DEBUG = False
-if DEBUG:
-  import cv2
-  import pdb
 
 names = ['BG', 'person', 'bicycle', 'car', 'motorcycle', 'airplane',
                'bus', 'train', 'truck', 'boat', 'traffic light',
@@ -186,7 +185,8 @@ def pred_eval(predictor, test_data, imdb, cfg, vis = False, thresh = 1e-3, logge
 
     for idx_class in range(1, imdb.num_classes):
         for idx_im in range(0, num_images):
-            keep = py_nms(all_boxes[idx_class][idx_im],cfg.TEST.NMS)
+#            keep = py_nms(all_boxes[idx_class][idx_im],cfg.TEST.NMS)
+            keep = soft_nms(all_boxes[idx_class][idx_im],cfg.TEST.NMS)
             all_boxes[idx_class][idx_im] = all_boxes[idx_class][idx_im][keep, :]
 
     if max_per_image > 0:

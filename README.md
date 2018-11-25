@@ -6,7 +6,7 @@ DetNet is evolved from fpn, thus one can change this repository to fpn easily.
 
 ### demo result
 
-![demo](https://github.com/BigDeviltjj/mxnet-detnet/blob/master/det_images/000000321790.jpg)
+![demo](https://github.com/BigDeviltjj/mxnet-detnet/blob/master/det_images/000000124442.jpg)
 
 ### set up environment
 
@@ -20,17 +20,27 @@ git clone git https://github.com/BigDeviltjj/mxnet-detnet.git
 
 3.run`sh init.sh`.
 
-4.specific requirements can be obtained from error message when running the program.
+4.you may need to install python modules including cv2, matplotlib, numpy etc.
 
-5.please make sure to clone the lastest commit version of this repository.
+## mAP
+|        Model          | Training data    | Test data |  mAP |
+|:-----------------:|:----------------:|:---------:|:----:|
+| [detnet_coco-0016.params](https://drive.google.com/drive/folders/1kPZaK4bRwzVuyij_uC0_niupw-VlLmcV)(multi_scale)| train2017| val2017| 39.7|
 
 ### demo
+
+Put the original images in images/, then run
 
 ```
 python demo.py
 ```
 
+detected images will be saved in det_images/
+
+
 ### train the model
+
+You need to put the coco2017 dataset in data/ folder, and download pretrained model from [here](). Then put them in folder /mnt/data-1/data/jiajie.tang/mxnet-detnet/model/pretrained_mode, then run
 
 ```
 python train_end2end.py
@@ -38,16 +48,8 @@ python train_end2end.py
 
 ### evaluate the model
 
+Download the compressed trained model and symbol file [detnet_coco-0016.params]() and unzip them then put them in folder output/detnet/coco/detnet/train2017/, then run
+
 ```
 python test.py
 ```
-
-### TODO
-
-* offering pretained model
-
-* synchronized batchnorm layer for multi-gpu training
-
-* replacing roi pooling layer with roi align layer
-
-
