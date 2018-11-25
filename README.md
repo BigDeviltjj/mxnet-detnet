@@ -25,7 +25,7 @@ git clone git https://github.com/BigDeviltjj/mxnet-detnet.git
 ## mAP
 |        Model          | Training data    | Test data |  mAP |
 |:-----------------:|:----------------:|:---------:|:----:|
-| [detnet_coco-0016.params](https://drive.google.com/drive/folders/1kPZaK4bRwzVuyij_uC0_niupw-VlLmcV)(multi_scale)| train2017| val2017| 39.7|
+| [detnet_coco-0016.params](https://drive.google.com/drive/folders/1Aon21uVFEsWTzDG2m1AMuo8ka-YZlRS3)(multi_scale)| train2017| val2017| 39.7|
 
 ### demo
 
@@ -40,7 +40,7 @@ detected images will be saved in det_images/
 
 ### train the model
 
-You need to put the coco2017 dataset in data/ folder, and download pretrained model from [here](). Then put them in folder /mnt/data-1/data/jiajie.tang/mxnet-detnet/model/pretrained_mode, then run
+You need to put the coco2017 dataset in data/ folder, and download pretrained model from [detnet-0000.params](https://drive.google.com/drive/folders/1Aon21uVFEsWTzDG2m1AMuo8ka-YZlRS3). Then put them in folder model/pretrained_mode, then run
 
 ```
 python train_end2end.py
@@ -48,7 +48,7 @@ python train_end2end.py
 
 ### evaluate the model
 
-Download the compressed trained model and symbol file [detnet_coco-0016.params]() and unzip them then put them in folder output/detnet/coco/detnet/train2017/, then run
+Download the compressed trained model and symbol file [detnet_coco-0016.params](https://drive.google.com/drive/folders/1Aon21uVFEsWTzDG2m1AMuo8ka-YZlRS3) and unzip them then put them in folder output/detnet/coco/detnet/train2017/, then run
 
 ```
 python test.py
