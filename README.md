@@ -10,17 +10,17 @@ DetNet is evolved from fpn, thus one can change this repository to fpn easily.
 
 ### set up environment
 
-1.clone this repository into the directory.
+1.Clone this repository into the directory.
 
 ```
 git clone git https://github.com/BigDeviltjj/mxnet-detnet.git
 ```
 
-2.download coco dataset into data directory.
+2.Download coco dataset into data directory.
 
-3.run`sh init.sh`.
+3.Run`sh init.sh`.
 
-4.you may need to install python modules including cv2, matplotlib, numpy etc.
+4.You may need to install python modules including cv2, matplotlib and numpy etc.
 
 ## mAP
 |        Model          | Training data    | Test data |  mAP |
@@ -29,7 +29,7 @@ git clone git https://github.com/BigDeviltjj/mxnet-detnet.git
 
 ### demo
 
-Put the original images in images/, then run
+Put the images you want to detect in images/, then run
 
 ```
 python demo.py
